@@ -68,11 +68,53 @@ var createSeriesObject = function(data){
   return series;
 };
 
+var createOneBand = function(city,i, g)
+{
+  scaleColorWithoutNull = d3.scaleLinear().domain([0,100,300]).range(["red", "white", "blue"]);
+  scaleColor = function(v) { if (v === null) return "gray"; else return scaleColorWithoutNull(v);};
+  lines = g.selectAll("line")
+    .data(city.values)
+    .enter()
+    .append("line");
+  lines.attr("i", function(d,i){return(i);})
+    .attr("value", function(d){return(d);})
+    .attr("x1", function(d,i){return(i);})
+    .attr("y1", function(d,i){return(0);})
+    .attr("x2", function(d,i){return(i);})
+    .attr("y2", function(d,i){return(10);})
+    .attr("stroke", function(d){return(scaleColor(d));});
+  return(lines);
+};
+
+var createBands = function(svgEl, citiesData)
+{
+  bands = svgEl.selectAll("g")
+    .data(citiesData)
+    .enter()
+    .append("g");
+  numberOfBands = bands.size();
+  translateBand = d3.scaleLinear().domain([0, numberOfBands])
+                                 .range([0, ctx.h-20]);
+  bands.attr("name", function(d){return d.name;});
+  bands.attr("transform", function(d, i){ return( "translate(0 " + translateBand(i) + ")");});
+  bands.each(function(city,i){return(createOneBand(city,i, d3.select(this)));});
+  /*
+  bands.each(function(city,i){
+    d3.select(this).selectAll("line")
+      .data([city])
+      .enter()
+      .append("line")
+      .attr("hello", function(d){return(d.name);});
+  });
+  */
+};
+
 var loadData = function(svgEl){
     d3.json("house_prices.json").then(function(data){
         dates = createDateArray(data);
         console.log(dates);
-        series = createSeriesObject(data);
-        console.log(series);
+        newCitiesData = createSeriesObject(data);
+        console.log(newCitiesData);
+        createBands(svgEl, newCitiesData);
     }).catch(function(error){console.log(error)});
 };
